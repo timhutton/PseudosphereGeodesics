@@ -37,6 +37,18 @@ class Circle{
         var d2 = dist2( p, this.p );
         return add( this.p, scalar_mul( sub( p, this.p ), r2 / d2 ) );
     }
+    
+    poincareToKlein(p) {
+        var u = dist(p, this.p) / this.r;
+        var s = 2 * u / (1 + u * u);
+        return add(this.p, scalar_mul(normalize(sub(p, this.p)), this.r * s));
+    }
+
+    kleinToPoincare(p) {
+        var s = dist(p, this.p) / this.r;
+        var u = s / (1 + Math.sqrt(1 - s * s));
+        return add(this.p, scalar_mul(normalize(sub(p, this.p)), this.r * u));
+    }
 }
 
 class Rect {
@@ -191,41 +203,6 @@ function lerp(a, b, u) {
 
 function invert_y(a) {
     return new P(a.x, -a.y, a.z, a.w);
-}
-
-function sech(x) { return 1 / Math.cosh(x); }
-
-function pseudosphere(p) {
-    // Transform point p ( u in [-inf, inf], v in [0, 2pi] ) onto the pseudosphere, following https://mathworld.wolfram.com/Pseudosphere.html
-    const u = p.y;
-    const v = p.x;
-    const radius = sech(u);
-    const theta = v;
-    const z = u - Math.tanh(u);
-    return new P(radius * Math.cos(theta), radius * Math.sin(theta), z);
-}
-
-function pseudosphere_surface_normal(p) {
-    const u = p.y;
-    const v = p.x;
-    const theta = v;
-    const dr_du = - Math.tanh(u) * sech(u);
-    const dz_du = 1 - Math.pow(sech(u), 2);
-    const dz_dr = dz_du / dr_du;
-    const normal = normalize(new P(-dz_dr, 0, 1)); // in the XZ plane
-    return rotateXY(normal, theta);
-}
-
-function poincareToKlein(p, circle) {
-    var u = dist(p, circle.p) / circle.r;
-    var s = 2 * u / (1 + u * u);
-    return add(circle.p, scalar_mul(normalize(sub(p, circle.p)), circle.r * s));
-}
-
-function kleinToPoincare(p, circle) {
-    var s = dist(p, circle.p) / circle.r;
-    var u = s / (1 + Math.sqrt(1 - s * s));
-    return add(circle.p, scalar_mul(normalize(sub(p, circle.p)), circle.r * u));
 }
 
 function getLinePoints(a, b, n_pts=100) {

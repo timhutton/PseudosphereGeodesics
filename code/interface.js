@@ -67,12 +67,13 @@ function init() {
         horizontal_view_angle = 2 * Math.PI * horizontalViewAngleSlider.value / 100.0;
         draw();
     }
+    
+    test_geodesic = get_pseudosphere_geodesic_points(new P(range.center.x, range.center.y*0.15), new P(range.center.x+0.1, range.center.y*0.15), 2000);
 
     draw();
 }
 
 function draw() {
-
     // fill canvas with light gray
     ctx.fillStyle = 'rgb(240,240,240)';
     ctx.beginPath();
@@ -167,7 +168,7 @@ function draw() {
         const input_rect = new Rect(new P(circle.p.x - circle.r * x_extent, circle.p.y + circle.r),
                                     new P(2 * circle.r * x_extent, circle.r * y_extent));
         const circle2 = new Circle(rect4.center, rect4.size.x / 2); // the half-plane (~kp_input_rect) transformed into this circle
-        const PoincareToKleinTransform = new Transform( p => poincareToKlein(p, circle2), p => kleinToPoincare(p, circle2) );
+        const PoincareToKleinTransform = new Transform( p => circle2.poincareToKlein(p), p => circle2.kleinToPoincare(p) );
         var RangeToKleinAxesTransform = new ComposedTransform( new LinearTransform2D(range, input_rect),
                             inversionTransform, PoincareToKleinTransform );
         const drawing = () => {
@@ -218,6 +219,10 @@ function draw() {
         const graph_line = line.map(graph.transform.forwards);
         drawLine(graph_line, 'rgb(120,120,200)');
         fillSpacedCircles(graph_line, 2, 'rgb(120,120,200)', 25);
+
+        // draw the test geodesic
+        const test_geodesic_pts = test_geodesic.map(graph.transform.forwards);
+        drawLine(test_geodesic_pts, 'rgb(200,120,200)');
 
         // draw some geodesics
         /*geodesics.forEach(geodesic => {
