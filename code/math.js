@@ -196,17 +196,16 @@ function invert_y(a) {
 function sech(x) { return 1 / Math.cosh(x); }
 
 function pseudosphere(p) {
-    // Transform point p ( x in [0, 2pi], y in [-inf, inf], ) onto the pseudosphere, following https://mathworld.wolfram.com/Pseudosphere.html
+    // Transform point p ( u in [-inf, inf], v in [0, 2pi] ) onto the pseudosphere, following https://mathworld.wolfram.com/Pseudosphere.html
     var u = p.y;
     var v = p.x;
-    return new P(sech(u) * Math.cos(v), sech(u) * Math.sin(v), Math.tanh(u)-u);
+    return new P(sech(u) * Math.cos(v), sech(u) * Math.sin(v), u - Math.tanh(u));
 }
 
 function poincareToKlein(p, circle) {
     var u = dist(p, circle.p) / circle.r;
     var s = 2 * u / (1 + u * u);
-    var p2 = add(circle.p, scalar_mul(normalize(sub(p, circle.p)), circle.r * s));
-    return p2;
+    return add(circle.p, scalar_mul(normalize(sub(p, circle.p)), circle.r * s));
 }
 
 function kleinToPoincare(p, circle) {

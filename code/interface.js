@@ -61,9 +61,9 @@ function init() {
     }
 
     var horizontalViewAngleSlider = document.getElementById("horizontalViewAngleSlider");
-    horizontal_view_angle = Math.PI + 2 * Math.PI * horizontalViewAngleSlider.value / 100.0;
+    horizontal_view_angle = 2 * Math.PI * horizontalViewAngleSlider.value / 100.0;
     horizontalViewAngleSlider.oninput = function() {
-        horizontal_view_angle = Math.PI + 2 * Math.PI * horizontalViewAngleSlider.value / 100.0;
+        horizontal_view_angle = 2 * Math.PI * horizontalViewAngleSlider.value / 100.0;
         draw();
     }
 
@@ -114,10 +114,10 @@ function draw() {
     {
         const flipY = p => new P(p.x, range.ymax - p.y + range.ymin);
         const flipYTransform = new Transform( flipY, flipY );
-        const standardAxes = new Graph( rect1, new ComposedTransform( flipYTransform, new LinearTransform2D(range, rect1) ),
+        const upperHalfPlaneAxes = new Graph( rect1, new ComposedTransform( flipYTransform, new LinearTransform2D(range, rect1) ),
                                       "Upper half-plane",
                                       "", "" );
-        graphs.push(standardAxes);
+        graphs.push(upperHalfPlaneAxes);
     }
 
     // define the Poincare disk transforms
@@ -131,16 +131,17 @@ function draw() {
                                     new P(2 * circle.r * x_extent, circle.r * y_extent));
         const circle2 = new Circle(rect2.center, rect2.size.x / 2); // the half-plane (~input_rect) transformed into this circle
         const PoincareAxes = new Graph( rect2, new ComposedTransform( new LinearTransform2D(range, input_rect),
-                            inversionTransform ), "Poincare disk model", "", "" ); // TODO add transform to rect2
+                            inversionTransform ), "Poincaré disk model", "", "" ); // TODO add transform to rect2
         graphs.push(PoincareAxes);
     }
-
     // define the 3D pseudosphere transforms
+
     {
-        const toPseudosphereCoords = new LinearTransform2D(range, new Rect(new P(-2,0), new P(4,1.5)));
+        const toPseudosphereCoords = new LinearTransform2D(range, new Rect(new P(-3,0), new P(6,6)));
         const identityTransform = p => new P(p.x, p.y, p.z);
         const pseudosphereTransform = new Transform(pseudosphere, identityTransform); // TODO: need camera ray intersection for the reverse
-        const camera = new Camera(new P(10*Math.cos(-horizontal_view_angle),10*Math.sin(-horizontal_view_angle), -vertical_view_angle), new P(0,0,-0.5), new P(0,0,-1), 1500, rect3.center);
+        const camera = new Camera(new P(10 * Math.cos(horizontal_view_angle), 10 * Math.sin(horizontal_view_angle), vertical_view_angle),
+                                  new P(0, 0, 0.7), new P(0, 0, 1), 1500, rect3.center);
         const cameraTransform = new Transform( p => camera.project(p), identityTransform );
         const pseudosphereAxes = new Graph( rect3, new ComposedTransform( toPseudosphereCoords, pseudosphereTransform, cameraTransform), "Pseudosphere", "", "" );
         graphs.push(pseudosphereAxes);
@@ -172,9 +173,9 @@ function draw() {
     var JonssonEmbeddingAxes = new Graph( rect2, new ComposedTransform( JonssonEmbeddingTransform, cameraTransform),
                                           "Jonsson embedding", "", "");*/
 
-    const pts = [new P(-12, 0), new P(17, 0)];
+    const pts = [new P(-17, 0), new P(17, 00)];
     const klein_pts = pts.map(RangeToKleinAxesTransform.forwards);
-    const klein_line = getLinePoints(klein_pts[0], klein_pts[1]);
+    const klein_line = getLinePoints(klein_pts[0], klein_pts[1], 500);
     const line = klein_line.map(RangeToKleinAxesTransform.backwards);
 
     // draw the graphs
@@ -198,7 +199,7 @@ function draw() {
         // draw a geodesic
         const graph_line = line.map(graph.transform.forwards);
         drawLine(graph_line, 'rgb(120,120,200)');
-        fillSpacedCircles(graph_line, 2, 'rgb(120,120,200)', 5);
+        fillSpacedCircles(graph_line, 2, 'rgb(120,120,200)', 25);
 
         // draw some geodesics
         /*geodesics.forEach(geodesic => {
