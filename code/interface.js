@@ -157,9 +157,9 @@ function draw() {
         const spacing = 100;
         const kp_input_rect = new Rect(new P(circle.p.x - circle.r * x_extent, circle.p.y + circle.r), new P(2 * circle.r * x_extent, circle.r * y_extent));
         const circle2 = new Circle(rect4.center, rect4.size.x / 2); // the half-plane (~kp_input_rect) transformed into this circle
-        const poincareToKleinTransform = new Transform( p => poincareToKlein(p, circle2), p => kleinToPoincare(p, circle2) ); // TODO: doesn't work as expected
+        const PoincareToKleinTransform = new Transform( p => poincareToKlein(p, circle2), p => kleinToPoincare(p, circle2) );
         const KleinAxes = new Graph( rect4, new ComposedTransform( new LinearTransform2D(range, kp_input_rect),
-                            inversionTransform, poincareToKleinTransform ), "Klein disk model", "", "" ); // TODO add transform to rect4
+                            inversionTransform, PoincareToKleinTransform ), "Klein disk model", "", "" ); // TODO add transform to rect4
         graphs.push(KleinAxes);
     }
 

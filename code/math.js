@@ -1,4 +1,4 @@
-/*  GravityIsNotAForce - Visualising geodesics in general relativity
+/*  PseudosphereGeodesics - Visualising geodesics in general relativity
     Copyright (C) 2020 Tim J. Hutton
 
     This program is free software: you can redistribute it and/or modify
@@ -203,17 +203,16 @@ function pseudosphere(p) {
 }
 
 function poincareToKlein(p, circle) {
-    // untested
     var u = dist(p, circle.p) / circle.r;
     var s = 2 * u / (1 + u * u);
-    return add(circle.p, scalar_mul(sub(p, circle.p), circle.r * s / u));
+    var p2 = add(circle.p, scalar_mul(normalize(sub(p, circle.p)), circle.r * s));
+    return p2;
 }
 
 function kleinToPoincare(p, circle) {
-    // untested
     var s = dist(p, circle.p) / circle.r;
     var u = s / (1 + Math.sqrt(1 - s * s));
-    return add(circle.p, scalar_mul(sub(p, circle.p), circle.r * u / s));
+    return add(circle.p, scalar_mul(normalize(sub(p, circle.p)), circle.r * u));
 }
 
 function getLinePoints(a, b, n_pts=100) {
