@@ -42,7 +42,7 @@ function init() {
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
 
-    range = new Rect( new P(-10, -10), new P(20, 20));
+    range = new Rect( new P(-20, -10), new P(40, 40));
 
     /*var heightRangeSlider = document.getElementById("heightRangeSlider");
     spacetime_range.size.y = lowest_allowed_top + (highest_allowed_top-lowest_allowed_top) * Math.pow(heightRangeSlider.value / 100.0, 3) - lowest_height;
@@ -125,13 +125,12 @@ function draw() {
         const circle = new Circle(new P(rect2.center.x, rect2.ymin), rect2.size.x); // TODO: make own space
         const invert = p => circle.invert(p);
         const inversionTransform = new Transform( invert, invert );
-        const x_extent = 1;
-        const y_extent = 1;
-        const spacing = 100;
-        const kp_input_rect = new Rect(new P(circle.p.x - circle.r * x_extent, circle.p.y + circle.r),
-                                     new P(2 * circle.r * x_extent, circle.r * y_extent));
-        const circle2 = new Circle(rect2.center, rect2.size.x / 2); // the half-plane (~kp_input_rect) transformed into this circle
-        const PoincareAxes = new Graph( rect2, new ComposedTransform( new LinearTransform2D(range, kp_input_rect),
+        const x_extent = 2;
+        const y_extent = 5;
+        const input_rect = new Rect(new P(circle.p.x - circle.r * x_extent, circle.p.y + circle.r),
+                                    new P(2 * circle.r * x_extent, circle.r * y_extent));
+        const circle2 = new Circle(rect2.center, rect2.size.x / 2); // the half-plane (~input_rect) transformed into this circle
+        const PoincareAxes = new Graph( rect2, new ComposedTransform( new LinearTransform2D(range, input_rect),
                             inversionTransform ), "Poincare disk model", "", "" ); // TODO add transform to rect2
         graphs.push(PoincareAxes);
     }
@@ -152,13 +151,13 @@ function draw() {
         const circle = new Circle(new P(rect4.center.x, rect4.ymin), rect4.size.x); // TODO: make own space
         const invert = p => circle.invert(p);
         const inversionTransform = new Transform( invert, invert );
-        const x_extent = 1;
-        const y_extent = 1;
-        const spacing = 100;
-        const kp_input_rect = new Rect(new P(circle.p.x - circle.r * x_extent, circle.p.y + circle.r), new P(2 * circle.r * x_extent, circle.r * y_extent));
+        const x_extent = 2;
+        const y_extent = 5;
+        const input_rect = new Rect(new P(circle.p.x - circle.r * x_extent, circle.p.y + circle.r),
+                                    new P(2 * circle.r * x_extent, circle.r * y_extent));
         const circle2 = new Circle(rect4.center, rect4.size.x / 2); // the half-plane (~kp_input_rect) transformed into this circle
         const PoincareToKleinTransform = new Transform( p => poincareToKlein(p, circle2), p => kleinToPoincare(p, circle2) );
-        const KleinAxes = new Graph( rect4, new ComposedTransform( new LinearTransform2D(range, kp_input_rect),
+        const KleinAxes = new Graph( rect4, new ComposedTransform( new LinearTransform2D(range, input_rect),
                             inversionTransform, PoincareToKleinTransform ), "Klein disk model", "", "" ); // TODO add transform to rect4
         graphs.push(KleinAxes);
     }
