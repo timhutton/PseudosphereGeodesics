@@ -42,7 +42,7 @@ function init() {
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
 
-    range = new Rect( new P(-20, -10), new P(40, 40));
+    range = new Rect( new P(-20, 0), new P(40, 50));
 
     /*var heightRangeSlider = document.getElementById("heightRangeSlider");
     spacetime_range.size.y = lowest_allowed_top + (highest_allowed_top-lowest_allowed_top) * Math.pow(heightRangeSlider.value / 100.0, 3) - lowest_height;
@@ -108,9 +108,9 @@ function draw() {
     var rect2 = new Rect( new P(margin+(margin+size)*1,50), new P(size,size));
     var rect3 = new Rect( new P(margin+(margin+size)*2,50), new P(size,size));
     var rect4 = new Rect( new P(margin+(margin+size)*3,50), new P(size,size));
-    
+
     var graphs = []
-    
+
     {
         const flipY = p => new P(p.x, range.ymax - p.y + range.ymin);
         const flipYTransform = new Transform( flipY, flipY );
@@ -157,8 +157,9 @@ function draw() {
                                     new P(2 * circle.r * x_extent, circle.r * y_extent));
         const circle2 = new Circle(rect4.center, rect4.size.x / 2); // the half-plane (~kp_input_rect) transformed into this circle
         const PoincareToKleinTransform = new Transform( p => poincareToKlein(p, circle2), p => kleinToPoincare(p, circle2) );
-        const KleinAxes = new Graph( rect4, new ComposedTransform( new LinearTransform2D(range, input_rect),
-                            inversionTransform, PoincareToKleinTransform ), "Klein disk model", "", "" ); // TODO add transform to rect4
+        var RangeToKleinAxesTransform = new ComposedTransform( new LinearTransform2D(range, input_rect),
+                            inversionTransform, PoincareToKleinTransform );
+        const KleinAxes = new Graph( rect4, RangeToKleinAxesTransform, "Klein disk model", "", "" ); // TODO add transform to rect4
         graphs.push(KleinAxes);
     }
 
@@ -170,6 +171,11 @@ function draw() {
     var cameraTransform = new Transform( p => camera.project(p), identityTransform );
     var JonssonEmbeddingAxes = new Graph( rect2, new ComposedTransform( JonssonEmbeddingTransform, cameraTransform),
                                           "Jonsson embedding", "", "");*/
+
+    const pts = [new P(-12, 0), new P(17, 0)];
+    const klein_pts = pts.map(RangeToKleinAxesTransform.forwards);
+    const klein_line = getLinePoints(klein_pts[0], klein_pts[1]);
+    const line = klein_line.map(RangeToKleinAxesTransform.backwards);
 
     // draw the graphs
     graphs.forEach(graph => {
@@ -188,6 +194,11 @@ function draw() {
         var axes_color = 'rgb(50,50,50)';
         drawLine(x_axis.map(graph.transform.forwards), axes_color);
         drawLine(y_axis.map(graph.transform.forwards), axes_color);
+
+        // draw a geodesic
+        const graph_line = line.map(graph.transform.forwards);
+        drawLine(graph_line, 'rgb(120,120,200)');
+        fillSpacedCircles(graph_line, 2, 'rgb(120,120,200)', 5);
 
         // draw some geodesics
         /*geodesics.forEach(geodesic => {
