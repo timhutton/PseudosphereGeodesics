@@ -197,9 +197,23 @@ function sech(x) { return 1 / Math.cosh(x); }
 
 function pseudosphere(p) {
     // Transform point p ( u in [-inf, inf], v in [0, 2pi] ) onto the pseudosphere, following https://mathworld.wolfram.com/Pseudosphere.html
-    var u = p.y;
-    var v = p.x;
-    return new P(sech(u) * Math.cos(v), sech(u) * Math.sin(v), u - Math.tanh(u));
+    const u = p.y;
+    const v = p.x;
+    const radius = sech(u);
+    const theta = v;
+    const z = u - Math.tanh(u);
+    return new P(radius * Math.cos(theta), radius * Math.sin(theta), z);
+}
+
+function pseudosphere_surface_normal(p) {
+    const u = p.y;
+    const v = p.x;
+    const theta = v;
+    const dr_du = - Math.tanh(u) * sech(u);
+    const dz_du = 1 - Math.pow(sech(u), 2);
+    const dz_dr = dz_du / dr_du;
+    const normal = normalize(new P(-dz_dr, 0, 1)); // in the XZ plane
+    return rotateXY(normal, theta);
 }
 
 function poincareToKlein(p, circle) {

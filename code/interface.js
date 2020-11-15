@@ -141,8 +141,8 @@ function draw() {
                             inversionTransform ), "Poincaré disk model", "", "", drawing ); // TODO add transform to rect2
         graphs.push(PoincareAxes);
     }
+    
     // define the 3D pseudosphere transforms
-
     {
         const toPseudosphereCoords = new LinearTransform2D(range, new Rect(new P(-3,0), new P(6,6)));
         const identityTransform = p => new P(p.x, p.y, p.z);
@@ -150,7 +150,10 @@ function draw() {
         const camera = new Camera(new P(10 * Math.cos(horizontal_view_angle), 10 * Math.sin(horizontal_view_angle), vertical_view_angle),
                                   new P(0, 0, 0.7), new P(0, 0, 1), 1500, rect3.center);
         const cameraTransform = new Transform( p => camera.project(p), identityTransform );
-        const pseudosphereAxes = new Graph( rect3, new ComposedTransform( toPseudosphereCoords, pseudosphereTransform, cameraTransform), "Pseudosphere", "", "" );
+        const pseudosphereAxesTransform = new ComposedTransform( toPseudosphereCoords, pseudosphereTransform, cameraTransform);
+        const drawing = () => {
+        };
+        const pseudosphereAxes = new Graph( rect3, pseudosphereAxesTransform, "Pseudosphere", "", "", drawing );
         graphs.push(pseudosphereAxes);
     }
 
