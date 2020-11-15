@@ -29,12 +29,13 @@ class Geodesic {
 }
 
 class Graph {
-    constructor(screen_rect, transform, top_text, left_text, bottom_text) {
+    constructor(screen_rect, transform, top_text, left_text, bottom_text, drawing = () => {}) {
         this.screen_rect = screen_rect;
         this.transform = transform;
         this.top_text = top_text;
         this.left_text = left_text;
         this.bottom_text = bottom_text;
+        this.drawing = drawing;
     }
 }
 
@@ -130,8 +131,14 @@ function draw() {
         const input_rect = new Rect(new P(circle.p.x - circle.r * x_extent, circle.p.y + circle.r),
                                     new P(2 * circle.r * x_extent, circle.r * y_extent));
         const circle2 = new Circle(rect2.center, rect2.size.x / 2); // the half-plane (~input_rect) transformed into this circle
+        const drawing = () => {
+            const circle1_pts = getEllipsePoints(circle.p, new P(circle.r, 0, 0), new P(0, circle.r, 0));
+            drawLine(circle1_pts, 'rgb(200, 200, 255)');
+            const circle2_pts = getEllipsePoints(circle2.p, new P(circle2.r, 0, 0), new P(0, circle2.r, 0));
+            drawLine(circle2_pts, 'rgb(0, 0, 0)');
+        };
         const PoincareAxes = new Graph( rect2, new ComposedTransform( new LinearTransform2D(range, input_rect),
-                            inversionTransform ), "Poincaré disk model", "", "" ); // TODO add transform to rect2
+                            inversionTransform ), "Poincaré disk model", "", "", drawing ); // TODO add transform to rect2
         graphs.push(PoincareAxes);
     }
     // define the 3D pseudosphere transforms
@@ -160,7 +167,13 @@ function draw() {
         const PoincareToKleinTransform = new Transform( p => poincareToKlein(p, circle2), p => kleinToPoincare(p, circle2) );
         var RangeToKleinAxesTransform = new ComposedTransform( new LinearTransform2D(range, input_rect),
                             inversionTransform, PoincareToKleinTransform );
-        const KleinAxes = new Graph( rect4, RangeToKleinAxesTransform, "Klein disk model", "", "" ); // TODO add transform to rect4
+        const drawing = () => {
+            const circle1_pts = getEllipsePoints(circle.p, new P(circle.r, 0, 0), new P(0, circle.r, 0));
+            drawLine(circle1_pts, 'rgb(200, 200, 255)');
+            const circle2_pts = getEllipsePoints(circle2.p, new P(circle2.r, 0, 0), new P(0, circle2.r, 0));
+            drawLine(circle2_pts, 'rgb(0, 0, 0)');
+        };
+        const KleinAxes = new Graph( rect4, RangeToKleinAxesTransform, "Klein disk model", "", "", drawing ); // TODO add transform to rect4
         graphs.push(KleinAxes);
     }
 
@@ -178,16 +191,18 @@ function draw() {
     const klein_line = getLinePoints(klein_pts[0], klein_pts[1], 500);
     const line = klein_line.map(RangeToKleinAxesTransform.backwards);
 
-    // draw the graphs
+    // draw things that the graphs have in common
     graphs.forEach(graph => {
         ctx.save(); // save the original clip for now
 
         // fill background with white
         ctx.fillStyle = 'rgb(255,255,255)';
         ctx.beginPath();
-        ctx.rect(graph.screen_rect.xmin, graph.screen_rect.ymin, graph.screen_rect.size.x, graph.screen_rect.size.y);
+        ctx.rect(graph.screen_rect.xmin-1, graph.screen_rect.ymin-1, graph.screen_rect.size.x+2, graph.screen_rect.size.y+2);
         ctx.fill();
         ctx.clip(); // clip to this rect until restored
+        
+        graph.drawing();
 
         // draw axes
         var axes_color = 'rgb(210,210,210)';
