@@ -49,6 +49,10 @@ class Circle{
         var u = s / (1 + Math.sqrt(1 - s * s));
         return add(this.p, scalar_mul(normalize(sub(p, this.p)), this.r * u));
     }
+    
+    getRect() {
+        return new Rect(new P(this.p.x - this.r, this.p.y - this.r), new P(this.r * 2, this.r * 2));
+    }
 }
 
 class Rect {
@@ -91,6 +95,8 @@ class ComposedTransform {
         this.backwards = p => transforms.reduceRight((pt, transform) => transform.backwards(pt), p);
     }
 }
+
+const identityTransform = p => new P(p.x, p.y, p.z);
 
 class Camera {
     constructor(p, look_at, up, f, pp, near = 1) {

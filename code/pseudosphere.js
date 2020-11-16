@@ -15,6 +15,14 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+function upper_half_plane_to_pseudosphere_input(p) {
+    return new P(p.x, Math.acosh(p.y));
+}
+
+function pseudosphere_input_to_upper_half_plane(p) {
+    return new P(p.x, Math.cosh(p.y));
+}
+
 function sech(x) { return 1 / Math.cosh(x); }
 
 function pseudosphere_radius_from_u(u) {
@@ -31,15 +39,17 @@ function pseudosphere_u_from_z(z) {
 
 function pseudosphere(p) {
     // Transform point p ( u in [-inf, inf], v in [0, 2pi] ) onto the pseudosphere, following https://mathworld.wolfram.com/Pseudosphere.html
+    p = upper_half_plane_to_pseudosphere_input(p);
     const u = p.y;
     const v = p.x;
     const radius = pseudosphere_radius_from_u(u);
-    const theta = v;
     const z = pseudosphere_z_from_u(u);
+    const theta = v;
     return new P(radius * Math.cos(theta), radius * Math.sin(theta), z);
 }
 
 function pseudosphere_surface_normal(p) {
+    p = upper_half_plane_to_pseudosphere_input(p);
     const u = p.y;
     const v = p.x;
     const theta = v;
@@ -79,7 +89,7 @@ function get_pseudosphere_geodesic_points(a, b, max_points) {
         const z = surface_c.z;
         const u = pseudosphere_u_from_z(z);
         const delta_v = signedAngleBetweenTwoPointsXY(surface_b, surface_c);
-        const c = new P(b.x + delta_v, u);
+        const c = pseudosphere_input_to_upper_half_plane(new P(b.x + delta_v, u));
         pts.push(c);
         surface_a = surface_b;
         surface_b = surface_c;
