@@ -120,6 +120,8 @@ class Camera {
 
 // functions:
 
+Math.sech = function(x) { return 1 / Math.cosh(x); }
+
 function dot(a, b) {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }

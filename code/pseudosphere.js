@@ -23,10 +23,8 @@ function pseudosphere_input_to_upper_half_plane(p) {
     return new P(p.x, Math.cosh(p.y));
 }
 
-function sech(x) { return 1 / Math.cosh(x); }
-
 function pseudosphere_radius_from_u(u) {
-    return sech(u);
+    return Math.sech(u);
 }
 
 function pseudosphere_z_from_u(u) {
@@ -53,8 +51,8 @@ function pseudosphere_surface_normal(p) {
     const u = p.y;
     const v = p.x;
     const theta = v;
-    const dr_du = - Math.tanh(u) * sech(u);
-    const dz_du = 1 - Math.pow(sech(u), 2);
+    const dr_du = - Math.tanh(u) * Math.sech(u);
+    const dz_du = 1 - Math.pow(Math.sech(u), 2);
     const dz_dr = dz_du / dr_du;
     const normal = normalize(new P(-dz_dr, 0, 1)); // in the XZ plane
     return rotateXY(normal, theta);
