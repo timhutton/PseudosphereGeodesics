@@ -36,7 +36,6 @@ function pseudosphere_u_from_z(z) {
 }
 
 function pseudosphere(p) {
-    // Transform point p ( u in [-inf, inf], v in [0, 2pi] ) onto the pseudosphere, following https://mathworld.wolfram.com/Pseudosphere.html
     p = upper_half_plane_to_pseudosphere_input(p);
     const u = p.y;
     const v = p.x;
@@ -59,7 +58,8 @@ function pseudosphere_surface_normal(p) {
 }
 
 function get_pseudosphere_geodesic_points(a, b, max_points) {
-    // Walk along the embedding following the geodesic until we hit delta_x = 0 or have enough points
+    // Walk along the embedding following the geodesic until we hit z=0 or have enough points.
+    // N.B. This function is only for debugging, there are easier ways of obtaining a geodesic.
     const pts = [a, b];
     var surface_a = pseudosphere(a);
     var surface_b = pseudosphere(b);
