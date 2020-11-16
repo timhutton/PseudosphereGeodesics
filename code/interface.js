@@ -86,7 +86,7 @@ function draw() {
     ctx.fill();
 
     var unit_line = getLinePoints(new P(range.xmin, 1), new P(range.xmax, 1), 500);
-    var y_axis = getLinePoints(new P(0, range.ymin), new P(0, range.ymax), 700);
+    var y_axes = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range.ymin), new P(x * Math.PI, range.ymax), 700));
 
     var y_step = 0.5;
     var x_step = 0.5;
@@ -110,6 +110,7 @@ function draw() {
     const major_axis_color = 'rgb(50,50,50)';
     const minor_axis_color = 'rgb(210,210,210)';
     const unit_line_color = 'rgb(150,50,50)';
+    const seam_color = 'rgb(200,130,50)';
 
     // define the upper half-plane graph
     {
@@ -122,7 +123,7 @@ function draw() {
             for(var y = range_to_show.ymin; y<=range_to_show.ymax; y+= y_step) {
                 drawLine(getLinePoints(new P(range_to_show.xmin, y), new P(range_to_show.xmax, y), 200).map(upperHalfPlaneAxesTransform.forwards), minor_axis_color);
             }
-            for(var x = x_step; x<=range_to_show.xmax; x+= x_step) {
+            for(var x = 0; x<=range_to_show.xmax; x+= x_step) {
                 drawLine(getLinePoints(new P(x, range_to_show.ymin), new P(x, range_to_show.ymax), 200).map(upperHalfPlaneAxesTransform.forwards), minor_axis_color);
             }
             for(var x = -x_step; x>=range_to_show.xmin; x-= x_step) {
@@ -146,7 +147,7 @@ function draw() {
             for(var y = range.ymin; y<=range.ymax; y+= y_step) {
                 drawLine(getLinePoints(new P(range.xmin, y), new P(range.xmax, y), 200).map(PoincareAxesTransform.forwards), minor_axis_color);
             }
-            for(var x = x_step; x<=range.xmax; x+= x_step) {
+            for(var x = 0; x<=range.xmax; x+= x_step) {
                 drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 200).map(PoincareAxesTransform.forwards), minor_axis_color);
             }
             for(var x = -x_step; x>=range.xmin; x-= x_step) {
@@ -165,7 +166,7 @@ function draw() {
         const range_to_show = new Rect( new P(-Math.PI, 1), new P(2 * Math.PI, 60));
         const pseudosphereTransform = new Transform(pseudosphere, identityTransform); // TODO: would need camera ray intersection for the reverse
         const camera = new Camera(new P(10 * Math.cos(horizontal_view_angle), 10 * Math.sin(horizontal_view_angle), vertical_view_angle),
-                                  new P(0, 0, 0.7), new P(0, 0, 1), 1500, rect3.center);
+                                  new P(0, 0, 1), new P(0, 0, 1), 1300, rect3.center);
         const cameraTransform = new Transform(p => camera.project(p), identityTransform);
         const pseudosphereAxesTransform = new ComposedTransform(invertXTransform, pseudosphereTransform, cameraTransform);
         const drawing = () => {
@@ -173,7 +174,7 @@ function draw() {
             for(var y = range_to_show.ymin; y<=range_to_show.ymax; y+= y_step) {
                 drawLine(getLinePoints(new P(range_to_show.xmin, y), new P(range_to_show.xmax, y), 500).map(pseudosphereAxesTransform.forwards), minor_axis_color);
             }
-            for(var x = x_step; x<=range_to_show.xmax; x+= x_step) {
+            for(var x = 0; x<=range_to_show.xmax; x+= x_step) {
                 drawLine(getLinePoints(new P(x, range_to_show.ymin), new P(x, range_to_show.ymax), 500).map(pseudosphereAxesTransform.forwards), minor_axis_color);
             }
             for(var x = -x_step; x>=range_to_show.xmin; x-= x_step) {
@@ -195,7 +196,7 @@ function draw() {
             for(var y = range.ymin; y<=range.ymax; y+= y_step) {
                 drawLine(getLinePoints(new P(range.xmin, y), new P(range.xmax, y), 200).map(KleinAxesTransform.forwards), minor_axis_color);
             }
-            for(var x = x_step; x<=range.xmax; x+= x_step) {
+            for(var x = 0; x<=range.xmax; x+= x_step) {
                 drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 200).map(KleinAxesTransform.forwards), minor_axis_color);
             }
             for(var x = -x_step; x>=range.xmin; x-= x_step) {
@@ -209,7 +210,9 @@ function draw() {
         graphs.push(KleinAxes);
 
         // also construct geodesics by plonking down straight lines in the Klein disk model
-        const pts = [[new P(-6, 1), new P(4, 1)], [new P(-1.5, 1), new P(2, 1)]];
+        const pts = [[new P(-6, 1), new P(4, 1)],
+                     [new P(-1.5, 1), new P(2, 1)],
+                     [new P(-14, 1), new P(14, 1)]];
         const klein_pts = pts.map(pair => pair.map(KleinAxesTransform.forwards));
         var klein_lines = klein_pts.map(pair => getLinePoints(pair[0], pair[1], 3000).map(KleinAxesTransform.backwards));
     }
@@ -230,10 +233,10 @@ function draw() {
 
         // draw axes
         drawLine(unit_line.map(graph.transform.forwards), unit_line_color);
-        drawLine(y_axis.map(graph.transform.forwards), major_axis_color);
+        y_axes.forEach(y_axis => drawLine(y_axis.map(graph.transform.forwards), seam_color));
 
         // draw one geodesic
-        ctx.lineWidth = '2';
+        ctx.lineWidth = '1.1';
         klein_lines.forEach((line, index) => drawLine(line.map(graph.transform.forwards), random_colors[index]));
 
         // draw the test geodesic, if chosen
