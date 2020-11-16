@@ -43,7 +43,7 @@ function init() {
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
 
-    range = new Rect( new P(-20, 0), new P(40, 40));
+    range = new Rect( new P(-30, 0), new P(60, 40));
 
     var verticalViewAngleSlider = document.getElementById("verticalViewAngleSlider");
     vertical_view_angle = 20 - 40 * verticalViewAngleSlider.value / 100.0;
@@ -85,8 +85,7 @@ function draw() {
     ctx.rect(0,0,canvas.width, canvas.height);
     ctx.fill();
 
-    var unit_line = getLinePoints(new P(range.xmin, 1), new P(range.xmax, 1), 500);
-    var y_axes = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range.ymin), new P(x * Math.PI, range.ymax), 700));
+    var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range.ymin), new P(x * Math.PI, range.ymax), 700));
 
     var y_step = 0.5;
     var x_step = 0.5;
@@ -132,6 +131,10 @@ function draw() {
             // draw the x-axis
             const x_axis = getLinePoints(new P(range_to_show.xmin, 0), new P(range_to_show.xmax, 0), 200);
             drawLine(x_axis.map(upperHalfPlaneAxesTransform.forwards), major_axis_color);
+            // draw the unit line
+            drawLine(getLinePoints(new P(range_to_show.xmin, 1), new P(range_to_show.xmax, 1), 500).map(upperHalfPlaneAxesTransform.forwards), unit_line_color);
+            // draw the seams where the pseudosphere wraps around itself
+            seams.forEach(seam => drawLine(seam.map(upperHalfPlaneAxesTransform.forwards), seam_color));
         };
         const upperHalfPlaneAxes = new Graph(rect1, upperHalfPlaneAxesTransform, "Upper half-plane", "", "", drawing);
         graphs.push(upperHalfPlaneAxes);
@@ -139,7 +142,7 @@ function draw() {
 
     // define the Poincare disk graph
     {
-        const circle_of_interest = new Circle(new P(0, -0.5), 0.6);
+        const circle_of_interest = new Circle(new P(0, -0.5), 0.52);
         const circle_of_interest_to_rect2 = new LinearTransform2D(circle_of_interest.getRect(), rect2);
         const PoincareAxesTransform = new ComposedTransform(inversionTransform, circle_of_interest_to_rect2);
         const drawing = () => {
@@ -156,6 +159,10 @@ function draw() {
             // draw the unit circle ( = x-axis)
             const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(circle_of_interest_to_rect2.forwards);
             drawLine(circle_pts, major_axis_color);
+            // draw the unit line
+            drawLine(getLinePoints(new P(range.xmin, 1), new P(range.xmax, 1), 500).map(PoincareAxesTransform.forwards), unit_line_color);
+            // draw the seams where the pseudosphere wraps around itself
+            seams.forEach(seam => drawLine(seam.map(PoincareAxesTransform.forwards), seam_color));
         };
         const PoincareAxes = new Graph(rect2, PoincareAxesTransform, "Poincaré disk model", "", "", drawing);
         graphs.push(PoincareAxes);
@@ -180,6 +187,10 @@ function draw() {
             for(var x = -x_step; x>=range_to_show.xmin; x-= x_step) {
                 drawLine(getLinePoints(new P(x, range_to_show.ymin), new P(x, range_to_show.ymax), 500).map(pseudosphereAxesTransform.forwards), minor_axis_color);
             }
+            // draw the unit line
+            drawLine(getLinePoints(new P(range_to_show.xmin, 1), new P(range_to_show.xmax, 1), 500).map(pseudosphereAxesTransform.forwards), unit_line_color);
+            // draw the seams where the pseudosphere wraps around itself (just one here, else the line looks too heavy)
+            drawLine(seams[0].map(pseudosphereAxesTransform.forwards), seam_color);
         };
         const pseudosphereAxes = new Graph(rect3, pseudosphereAxesTransform, "Pseudosphere", "", "", drawing);
         graphs.push(pseudosphereAxes);
@@ -187,7 +198,7 @@ function draw() {
 
     // define the Klein pseudosphere graph
     {
-        const circle_of_interest = new Circle(new P(0, -0.5), 0.8);
+        const circle_of_interest = new Circle(new P(0, -0.5), 0.72);
         const circle_of_interest_to_rect4 = new LinearTransform2D(circle_of_interest.getRect(), rect4);
         const PoincareToKleinTransform = new Transform(p => unit_circle.poincareToKlein(p), p => unit_circle.kleinToPoincare(p));
         var KleinAxesTransform = new ComposedTransform(inversionTransform, PoincareToKleinTransform, circle_of_interest_to_rect4);
@@ -205,6 +216,10 @@ function draw() {
             // draw the unit circle ( = x-axis)
             const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(circle_of_interest_to_rect4.forwards);
             drawLine(circle_pts, major_axis_color);
+            // draw the unit line
+            drawLine(getLinePoints(new P(range.xmin, 1), new P(range.xmax, 1), 500).map(KleinAxesTransform.forwards), unit_line_color);
+            // draw the seams where the pseudosphere wraps around itself
+            seams.forEach(seam => drawLine(seam.map(KleinAxesTransform.forwards), seam_color));
         };
         const KleinAxes = new Graph(rect4, KleinAxesTransform, "Klein disk model", "", "", drawing);
         graphs.push(KleinAxes);
@@ -231,13 +246,9 @@ function draw() {
         // draw things that are particular to this graph
         graph.drawing();
 
-        // draw axes
-        drawLine(unit_line.map(graph.transform.forwards), unit_line_color);
-        y_axes.forEach(y_axis => drawLine(y_axis.map(graph.transform.forwards), seam_color));
-
-        // draw one geodesic
+        // draw the geodesics
         ctx.lineWidth = '1.1';
-        klein_lines.forEach((line, index) => drawLine(line.map(graph.transform.forwards), random_colors[index]));
+        klein_lines.forEach((line, index) => drawLine(line.map(graph.transform.forwards), random_colors[index % random_colors.length]));
 
         // draw the test geodesic, if chosen
         if(typeof test_geodesic != 'undefined') {
