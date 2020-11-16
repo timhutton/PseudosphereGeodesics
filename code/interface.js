@@ -87,8 +87,8 @@ function draw() {
 
     var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range.ymin), new P(x * Math.PI, range.ymax), 700));
 
+    var x_step = Math.PI / 6;
     var y_step = 0.5;
-    var x_step = 0.5;
 
     var n_graphs = 4;
     var margin = 40;
