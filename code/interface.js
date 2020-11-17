@@ -200,7 +200,7 @@ function init() {
 
 function addUpperHalfPlaneGraph(rect) {
     const range_to_show = new Rect( new P(-7.5, 0), new P(15, 15));
-    var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range_to_show.ymin), new P(x * Math.PI, range_to_show.ymax), 700));
+    var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range_to_show.ymin), new P(x * Math.PI, range_to_show.ymax), 2));
     const flipY = p => new P(p.x, range_to_show.ymax - p.y + range_to_show.ymin); // flip the range in-place
     const flipYTransform = new Transform(flipY, flipY);
     const upperHalfPlaneAxesTransform = new ComposedTransform(flipYTransform, new LinearTransform2D(range_to_show, rect));
@@ -222,6 +222,8 @@ function addUpperHalfPlaneGraph(rect) {
         drawLine(getLinePoints(new P(range_to_show.xmin, 1), new P(range_to_show.xmax, 1), 2).map(upperHalfPlaneAxesTransform.forwards), unit_line_color);
         // draw the seams where the pseudosphere wraps around itself
         seams.forEach(seam => drawLine(seam.map(upperHalfPlaneAxesTransform.forwards), seam_color));
+        // draw the geodesics
+        drawGeodesics(upperHalfPlaneAxesTransform.forwards, 500);
     };
     const upperHalfPlaneAxes = new Graph(rect, upperHalfPlaneAxesTransform, "Upper half-plane", "", "", drawing);
     graphs.push(upperHalfPlaneAxes);
@@ -235,7 +237,7 @@ function addPoincareGraph(rect, range) {
     const drawing = () => {
         // draw the minor axes
         for(var y = range.ymin; y<=range.ymax; y+= y_step) {
-            drawLine(getLinePoints(new P(range.xmin, y), new P(range.xmax, y), 200).map(PoincareAxesTransform.forwards), minor_axis_color);
+            drawLine(getLinePoints(new P(range.xmin, y), new P(range.xmax, y), 500).map(PoincareAxesTransform.forwards), minor_axis_color);
         }
         for(var x = 0; x<=range.xmax; x+= x_step) {
             drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 200).map(PoincareAxesTransform.forwards), minor_axis_color);
@@ -250,6 +252,8 @@ function addPoincareGraph(rect, range) {
         drawLine(getLinePoints(new P(range.xmin, 1), new P(range.xmax, 1), 500).map(PoincareAxesTransform.forwards), unit_line_color);
         // draw the seams where the pseudosphere wraps around itself
         seams.forEach(seam => drawLine(seam.map(PoincareAxesTransform.forwards), seam_color));
+        // draw the geodesics
+        drawGeodesics(PoincareAxesTransform.forwards, 500);
     };
     const PoincareAxes = new Graph(rect, PoincareAxesTransform, "Poincaré disk model", "", "", drawing);
     graphs.push(PoincareAxes);
@@ -277,13 +281,15 @@ function addPseudosphereGraph(rect, camera) {
         drawLine(getLinePoints(new P(range_to_show.xmin, 1), new P(range_to_show.xmax, 1), 500).map(pseudosphereAxesTransform.forwards), unit_line_color);
         // draw the seams where the pseudosphere wraps around itself (just one here, else the line looks too heavy)
         drawLine(seams[0].map(pseudosphereAxesTransform.forwards), seam_color);
+        // draw the geodesics
+        drawGeodesics(pseudosphereAxesTransform.forwards, 5000); // need more points here because there can be a lot of stretching
     };
     const pseudosphereAxes = new Graph(rect, pseudosphereAxesTransform, "Pseudosphere", "", "", drawing);
     graphs.push(pseudosphereAxes);
 }
 
 function addKleinGraph(rect, range) {
-    var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range.ymin), new P(x * Math.PI, range.ymax), 700));
+    var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range.ymin), new P(x * Math.PI, range.ymax), 2));
     const circle_of_interest = new Circle(new P(0, -0.5), 0.72);
     const circle_of_interest_to_rect = new LinearTransform2D(circle_of_interest.getRect(), rect);
     const PoincareToKleinTransform = new Transform(p => unit_circle.poincareToKlein(p), p => unit_circle.kleinToPoincare(p));
@@ -291,13 +297,13 @@ function addKleinGraph(rect, range) {
     const drawing = () => {
         // draw the minor axes
         for(var y = range.ymin; y<=range.ymax; y+= y_step) {
-            drawLine(getLinePoints(new P(range.xmin, y), new P(range.xmax, y), 200).map(KleinAxesTransform.forwards), minor_axis_color);
+            drawLine(getLinePoints(new P(range.xmin, y), new P(range.xmax, y), 500).map(KleinAxesTransform.forwards), minor_axis_color);
         }
         for(var x = 0; x<=range.xmax; x+= x_step) {
-            drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 200).map(KleinAxesTransform.forwards), minor_axis_color);
+            drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 2).map(KleinAxesTransform.forwards), minor_axis_color);
         }
         for(var x = -x_step; x>=range.xmin; x-= x_step) {
-            drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 200).map(KleinAxesTransform.forwards), minor_axis_color);
+            drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 2).map(KleinAxesTransform.forwards), minor_axis_color);
         }
         // draw the unit circle ( = x-axis)
         const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(circle_of_interest_to_rect.forwards);
@@ -306,9 +312,26 @@ function addKleinGraph(rect, range) {
         drawLine(getLinePoints(new P(range.xmin, 1), new P(range.xmax, 1), 500).map(KleinAxesTransform.forwards), unit_line_color);
         // draw the seams where the pseudosphere wraps around itself
         seams.forEach(seam => drawLine(seam.map(KleinAxesTransform.forwards), seam_color));
+        // draw the geodesics
+        drawGeodesics(KleinAxesTransform.forwards, 2); // all the geodesics are straight lines here, so 2 points is enough!
     };
     const KleinAxes = new Graph(rect, KleinAxesTransform, "Klein disk model", "", "", drawing);
     graphs.push(KleinAxes);
+}
+
+function drawGeodesics(transform, n_pts) {
+    ctx.lineWidth = '1.1';
+    geodesics.forEach(geodesic => {
+        // This is magical. All geodesics are straight lines in the Klein model, so we jump into Klein space,
+        // interpolate between the start and end points to make a list of points, then jump back into our xy
+        // coordinates (on the upper half-plane model). Then to draw we can jump into the space of this graph.
+        const klein_pts = geodesic.ends.map(KleinAxesTransform.forwards);
+        const line = getLinePoints(klein_pts[0], klein_pts[1], n_pts).map(KleinAxesTransform.backwards);
+        drawLine(line.map(transform), geodesic.color)
+        for(var iEnd = 0; iEnd < 2; iEnd++) {
+            fillCircle(transform(geodesic.ends[iEnd]), geodesic.end_sizes[iEnd], geodesic.end_colors[iEnd]);
+        }
+    });
 }
 
 function random_color() {
@@ -335,20 +358,6 @@ function draw() {
 
         // draw things that are particular to this graph
         graph.drawing();
-
-        // draw the geodesics
-        ctx.lineWidth = '1.1';
-        geodesics.forEach(geodesic => {
-            // This is magical. All geodesics are straight lines in the Klein model, so we jump into Klein space,
-            // interpolate between the start and end points to make a list of points, then jump back into our xy
-            // coordinates (on the upper half-plane model). Then to draw we can jump into the space of this graph.
-            const klein_pts = geodesic.ends.map(KleinAxesTransform.forwards);
-            const line = getLinePoints(klein_pts[0], klein_pts[1], 3000).map(KleinAxesTransform.backwards);
-            drawLine(line.map(graph.transform.forwards), geodesic.color)
-            for(var iEnd = 0; iEnd < 2; iEnd++) {
-                fillCircle(graph.transform.forwards(geodesic.ends[iEnd]), geodesic.end_sizes[iEnd], geodesic.end_colors[iEnd]);
-            }
-        });
 
         // draw the test geodesic, if chosen
         if(typeof test_geodesic != 'undefined') {
