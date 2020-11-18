@@ -11,7 +11,7 @@ The blue and green lines are geodesics ("straight lines") in the four models. Yo
 
 To map the upper half-plane onto the pseudosphere, everything above the red line (y=1) is wrapped around the funnel, like a roll of toilet paper. The orange lines in each view map onto the single orange line on the pseudosphere. A geodesic that crosses multiple orange lines will therefore wind itself more than once around the pseudosphere.
 
-A geodesic on the pseudosphere is the path an ant would take if it were to walk straight forwards. Remarkably, the complicated paths created always unwrap to form straight lines in the Klein disk model. There's a deep connection here with <a href="https://en.wikipedia.org/wiki/General_relativity">general relativity</a>, where inertial objects may take complicated paths in space but are actually moving along straight lines in spacetime. See <a href="https://timhutton.github.io/GravityIsNotAForce/">here</a> for a similar web app that visualises how this works.
+A geodesic on the pseudosphere is the path an ant would take if it were to walk straight forwards. Remarkably, the complicated paths created always unwrap to form straight lines in the Klein disk model. There's a deep connection here with <a href="https://en.wikipedia.org/wiki/General_relativity">general relativity</a>, where inertial objects may take complicated paths in space but are actually moving along straight lines in spacetime. See <a href="https://timhutton.github.io/GravityIsNotAForce/variable_gravity.html">here</a> for a similar web app that visualises how this works.
 
 ----
 
