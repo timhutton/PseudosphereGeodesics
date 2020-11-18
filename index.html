@@ -29,10 +29,11 @@
     </p>
 
     <h4>Description:</h4>
+
     <p class="text">
     The <a href="https://en.wikipedia.org/wiki/Pseudosphere">pseudosphere</a> is a surface of constant negative curvature. Also shown are three other representations of hyperbolic geometry: the <a href="https://en.wikipedia.org/wiki/Poincar%C3%A9_half-plane_model">upper half-plane model</a>, the <a href="https://en.wikipedia.org/wiki/Poincar%C3%A9_disk_model">Poincaré disk model</a> and the <a href="https://en.wikipedia.org/wiki/Beltrami%E2%80%93Klein_model">Klein disk model</a>.
     </p>
-    
+
     <p class="text">
     The blue and green lines are geodesics ("straight lines") in the four models. You can drag their end points to move them around (except on the 3D view).
     </p>
@@ -43,6 +44,32 @@
 
     <p class="text">
     A geodesic on the pseudosphere is the path an ant would take if it were to walk straight forwards. Remarkably, the complicated paths created always unwrap to form straight lines in the Klein disk model. There's a deep connection here with <a href="https://en.wikipedia.org/wiki/General_relativity">general relativity</a>, where inertial objects may take complicated paths in space but are actually moving along straight lines in spacetime. See <a href="https://timhutton.github.io/GravityIsNotAForce/variable_gravity.html">here</a> for a similar web app that visualises how this works.
+    </p>
+
+    <h4>Implementation details:</h4>
+
+    <p class="text">
+    The upper half-plane is parameterized by x horizontally in the range [-30, 30] with divisions every pi/6, and y vertically in the range [0, 40] with divisions every 0.5. To map from the upper half-plane to the 3D space of the pseudosphere, we use:</p>
+    <p><tt>(x, y) &#x2192; (sech(cosh(y))*cos(x), sech(cosh(y))*sin(x), cosh(y) - tanh(cosh(y)))</tt></p>
+
+    <p class="text">
+    To map from the upper half-plane to the Poincaré disk model, we perform a <a href="https://en.wikipedia.org/wiki/Inversive_geometry#Inversion_in_a_circle">circle inversion</a> using a circle of radius sqrt(2) centered at (0, -1). This maps the entire upper half-plane into the unit circle. The same operation also performs the reverse, to map from the Poincaré disk back to the upper half-plane.
+    </p>
+
+    <p class="text">
+    To map between the Poincaré disk and the Klein disk, see e.g. <a href="https://en.wikipedia.org/wiki/Beltrami%E2%80%93Klein_model#Relation_to_the_Poincar%C3%A9_disk_model">here</a>.
+    </p>
+
+    <p class="text">
+    To draw the geodesics, we take advantage of the fact that they are all straight lines in the Klein disk model. We transform the start and end coordinates (parameterized on the upper half-plane) to the Klein disk, then linearly interpolate along the line to make a list of points. Those points can then be transformed into the other models.
+    </p>
+
+    <p class="text">
+    The orange lines show how the x direction wraps around the pseudosphere. They are spaced apart by 2*pi so that they all map to the same place on the pseudosphere.
+    </p>
+
+    <p class="text">
+    To validate the implementation, it is possible to construct geodesics in a different way. We can simulate the ant walking on the surface, using the surface normal to ensure that the ant is travelling in a straight line. Comparing these geodesics to the other ones should give an exact match, and they should also transform into straight lines on the Klein disk.
     </p>
 
     <p class="text">
