@@ -50,7 +50,7 @@
 
     <p class="text">
     The upper half-plane is parameterized by x horizontally in the range [-30, 30] with divisions every pi/6, and y vertically in the range [0, 40] with divisions every 0.5. To map from the upper half-plane to the 3D space of the pseudosphere, we use:</p>
-    <p><tt>(x, y) &#x2192; (sech(cosh(y))*cos(x), sech(cosh(y))*sin(x), cosh(y) - tanh(cosh(y)))</tt></p>
+    <p><tt>(x, y) &#x2192; (sech(acosh(y))*cos(x), sech(acosh(y))*sin(x), acosh(y) - tanh(acosh(y)))</tt></p>
 
     <p class="text">
     To map from the upper half-plane to the Poincaré disk model, we perform a <a href="https://en.wikipedia.org/wiki/Inversive_geometry#Inversion_in_a_circle">circle inversion</a> using a circle of radius sqrt(2) centered at (0, -1). This maps the entire upper half-plane into the unit circle. The same operation also performs the reverse, to map from the Poincaré disk back to the upper half-plane.
