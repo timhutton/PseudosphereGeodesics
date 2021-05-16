@@ -17,7 +17,7 @@
 
 // classes:
 
-class P{
+class P {
     constructor(x, y, z=0, w=0) {
         this.x = x;
         this.y = y;
@@ -26,7 +26,7 @@ class P{
     }
 }
 
-class Circle{
+class Circle {
     // Actually an N-sphere but a circle in the 2D case
     constructor(p, r) {
         this.p = p;
@@ -37,7 +37,7 @@ class Circle{
         var d2 = dist2( p, this.p );
         return add( this.p, scalar_mul( sub( p, this.p ), r2 / d2 ) );
     }
-    
+
     poincareToKlein(p) {
         var u = dist(p, this.p) / this.r;
         var s = 2 * u / (1 + u * u);
@@ -49,7 +49,7 @@ class Circle{
         var u = s / (1 + Math.sqrt(1 - s * s));
         return add(this.p, scalar_mul(normalize(sub(p, this.p)), this.r * u));
     }
-    
+
     getRect() {
         return new Rect(new P(this.p.x - this.r, this.p.y - this.r), new P(this.r * 2, this.r * 2));
     }

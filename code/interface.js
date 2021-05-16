@@ -26,6 +26,7 @@ var geodesics;
 var isDragging;
 var dragGeodesic;
 var dragEnd;
+var x_offset;
 
 class Geodesic {
     constructor(start, end, color, hover_color) {
@@ -40,15 +41,166 @@ class Geodesic {
 }
 
 class Graph {
-    constructor(rect, transform, top_text, left_text, bottom_text, drawing = () => {}) {
+    constructor(rect) {
         this.rect = rect;
-        this.transform = transform;
-        this.top_text = top_text;
-        this.left_text = left_text;
-        this.bottom_text = bottom_text;
-        this.drawing = drawing;
     }
 }
+
+class UpperHalfPlaneGraph extends Graph {
+    constructor(rect) {
+        super(rect);
+        this.top_text = "Upper half-plane";
+        this.left_text = "";
+        this.bottom_text ="";
+    }
+    update_transforms() {
+        this.range_to_show = new Rect( new P(-7.5 + x_offset, 0), new P(15, 15));
+        const flipY = p => new P(p.x, this.range_to_show.ymax - p.y + this.range_to_show.ymin); // flip the range in-place
+        const flipYTransform = new Transform(flipY, flipY);
+        this.transform = new ComposedTransform(flipYTransform, new LinearTransform2D(this.range_to_show, this.rect));
+    }
+    draw() {
+        // draw the minor axes
+        for(var y = this.range_to_show.ymin; y<=this.range_to_show.ymax; y+= y_step) {
+            drawLine(getLinePoints(new P(this.range_to_show.xmin, y), new P(this.range_to_show.xmax, y), 2).map(this.transform.forwards), minor_axis_color);
+        }
+        for(var x = 0; x<=this.range_to_show.xmax; x+= x_step) {
+            drawLine(getLinePoints(new P(x, this.range_to_show.ymin), new P(x, this.range_to_show.ymax), 2).map(this.transform.forwards), minor_axis_color);
+        }
+        for(var x = -x_step; x>=this.range_to_show.xmin; x-= x_step) {
+            drawLine(getLinePoints(new P(x, this.range_to_show.ymin), new P(x, this.range_to_show.ymax), 2).map(this.transform.forwards), minor_axis_color);
+        }
+        // draw the x-axis
+        const x_axis = getLinePoints(new P(this.range_to_show.xmin, 0), new P(this.range_to_show.xmax, 0), 2);
+        drawLine(x_axis.map(this.transform.forwards), major_axis_color);
+        // draw the unit line
+        drawLine(getLinePoints(new P(this.range_to_show.xmin, 1), new P(this.range_to_show.xmax, 1), 2).map(this.transform.forwards), unit_line_color);
+        // draw the seams where the pseudosphere wraps around itself
+        var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, this.range_to_show.ymin), new P(x * Math.PI, this.range_to_show.ymax), 2));
+        seams.forEach(seam => drawLine(seam.map(this.transform.forwards), seam_color));
+        // draw the geodesics
+        drawGeodesics(this.transform.forwards, 500);
+    }
+}
+
+class PoincareGraph extends Graph {
+    constructor(rect, initial_range) {
+        super(rect);
+        this.initial_range = initial_range;
+        this.top_text = "Poincaré disk model";
+        this.left_text = "";
+        this.bottom_text ="";
+    }
+    update_transforms() {
+        this.range = new Rect(new P(this.initial_range.p.x + x_offset, this.initial_range.p.y), new P(this.initial_range.size.x, this.initial_range.size.y));
+        const range_to_initial_range = new LinearTransform2D(this.range, this.initial_range);
+        const circle_of_interest = new Circle(new P(0, -0.5), 0.52);
+        this.circle_of_interest_to_rect = new LinearTransform2D(circle_of_interest.getRect(), this.rect);
+        this.transform = new ComposedTransform(range_to_initial_range, inversionTransform, this.circle_of_interest_to_rect);
+    }
+    draw() {
+        // draw the minor axes
+        for(var y = this.range.ymin; y<=this.range.ymax; y+= y_step) {
+            drawLine(getLinePoints(new P(this.range.xmin, y), new P(this.range.xmax, y), 500).map(this.transform.forwards), minor_axis_color);
+        }
+        for(var x = 0; x<=this.range.xmax; x+= x_step) {
+            drawLine(getLinePoints(new P(x, this.range.ymin), new P(x, this.range.ymax), 200).map(this.transform.forwards), minor_axis_color);
+        }
+        for(var x = -x_step; x>=this.range.xmin; x-= x_step) {
+            drawLine(getLinePoints(new P(x, this.range.ymin), new P(x, this.range.ymax), 200).map(this.transform.forwards), minor_axis_color);
+        }
+        // draw the unit circle ( = x-axis)
+        const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(this.circle_of_interest_to_rect.forwards);
+        drawLine(circle_pts, major_axis_color);
+        // draw the unit line
+        drawLine(getLinePoints(new P(this.range.xmin, 1), new P(this.range.xmax, 1), 500).map(this.transform.forwards), unit_line_color);
+        // draw the seams where the pseudosphere wraps around itself
+        var seams = [-9,-7,-5,-3,-1,1,3,5,7,9].map(x => getLinePoints(new P(x * Math.PI, this.range.ymin), new P(x * Math.PI, this.range.ymax), 700));
+        seams.forEach(seam => drawLine(seam.map(this.transform.forwards), seam_color));
+        // draw the geodesics
+        drawGeodesics(this.transform.forwards, 500);
+    }
+}
+
+class PseudosphereGraph extends Graph {
+    constructor(rect, camera) {
+        super(rect);
+        this.camera = camera;
+        this.top_text = "Pseudosphere";
+        this.left_text = "";
+        this.bottom_text ="";
+    }
+    update_transforms() {
+        const initial_range = new Rect( new P(-Math.PI, 1), new P(2 * Math.PI, 60));
+        this.range_to_show = new Rect( new P(-Math.PI + x_offset, 1), new P(2 * Math.PI, 60));
+        const range_to_initial_range = new LinearTransform2D(this.range_to_show, initial_range);
+        const pseudosphereTransform = new Transform(pseudosphere, identityTransform); // TODO: would need camera ray intersection for the reverse
+        this.camera.pp = this.rect.center;
+        const cameraTransform = new Transform(p => this.camera.project(p), identityTransform);
+        this.transform = new ComposedTransform(range_to_initial_range, invertXTransform, pseudosphereTransform, cameraTransform);
+    }
+    draw() {
+        // draw the minor axes
+        for(var y = this.range_to_show.ymin; y<=this.range_to_show.ymax; y+= y_step) {
+            drawLine(getLinePoints(new P(this.range_to_show.xmin, y), new P(this.range_to_show.xmax, y), 500).map(this.transform.forwards), minor_axis_color);
+        }
+        for(var x = 0; x<=this.range_to_show.xmax; x+= x_step) {
+            drawLine(getLinePoints(new P(x, this.range_to_show.ymin), new P(x, this.range_to_show.ymax), 500).map(this.transform.forwards), minor_axis_color);
+        }
+        for(var x = -x_step; x>=this.range_to_show.xmin; x-= x_step) {
+            drawLine(getLinePoints(new P(x, this.range_to_show.ymin), new P(x, this.range_to_show.ymax), 500).map(this.transform.forwards), minor_axis_color);
+        }
+        // draw the unit line
+        drawLine(getLinePoints(new P(this.range_to_show.xmin, 1), new P(this.range_to_show.xmax, 1), 500).map(this.transform.forwards), unit_line_color);
+        // draw the seams where the pseudosphere wraps around itself (just one here, else the line looks too heavy)
+        var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, this.range_to_show.ymin), new P(x * Math.PI, this.range_to_show.ymax), 700));
+        drawLine(seams[0].map(this.transform.forwards), seam_color);
+        // draw the geodesics
+        drawGeodesics(this.transform.forwards, 5000); // need more points here because there can be a lot of stretching
+    }
+}
+
+class KleinGraph extends Graph {
+    constructor(rect, initial_range) {
+        super(rect);
+        this.initial_range = initial_range;
+        this.top_text = "Klein disk model";
+        this.left_text = "";
+        this.bottom_text ="";
+    }
+    update_transforms() {
+        this.range = new Rect(new P(this.initial_range.p.x + x_offset, this.initial_range.p.y), new P(this.initial_range.size.x, this.initial_range.size.y));
+        const range_to_initial_range = new LinearTransform2D(this.range, this.initial_range);
+        const circle_of_interest = new Circle(new P(0, -0.5), 0.72);
+        this.circle_of_interest_to_rect = new LinearTransform2D(circle_of_interest.getRect(), this.rect);
+        const PoincareToKleinTransform = new Transform(p => unit_circle.poincareToKlein(p), p => unit_circle.kleinToPoincare(p));
+        KleinAxesTransform = new ComposedTransform(range_to_initial_range, inversionTransform, PoincareToKleinTransform, this.circle_of_interest_to_rect);
+        this.transform = KleinAxesTransform;
+    }
+    draw() {
+        // draw the minor axes
+        for(var y = this.range.ymin; y<=this.range.ymax; y+= y_step) {
+            drawLine(getLinePoints(new P(this.range.xmin, y), new P(this.range.xmax, y), 500).map(KleinAxesTransform.forwards), minor_axis_color);
+        }
+        for(var x = 0; x<=this.range.xmax; x+= x_step) {
+            drawLine(getLinePoints(new P(x, this.range.ymin), new P(x, this.range.ymax), 2).map(KleinAxesTransform.forwards), minor_axis_color);
+        }
+        for(var x = -x_step; x>=this.range.xmin; x-= x_step) {
+            drawLine(getLinePoints(new P(x, this.range.ymin), new P(x, this.range.ymax), 2).map(KleinAxesTransform.forwards), minor_axis_color);
+        }
+        // draw the unit circle ( = x-axis)
+        const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(this.circle_of_interest_to_rect.forwards);
+        drawLine(circle_pts, major_axis_color);
+        // draw the unit line
+        drawLine(getLinePoints(new P(this.range.xmin, 1), new P(this.range.xmax, 1), 500).map(KleinAxesTransform.forwards), unit_line_color);
+        // draw the seams where the pseudosphere wraps around itself
+        var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, this.range.ymin), new P(x * Math.PI, this.range.ymax), 2));
+        seams.forEach(seam => drawLine(seam.map(KleinAxesTransform.forwards), seam_color));
+        // draw the geodesics
+        drawGeodesics(KleinAxesTransform.forwards, 2); // all the geodesics are straight lines here, so 2 points is enough!
+    }
+}
+
 
 function resetMarkers() {
     geodesics.forEach( geodesic => {
@@ -123,11 +275,9 @@ function init() {
 
     var verticalViewAngleSlider = document.getElementById("verticalViewAngleSlider");
     vertical_view_angle = 20 - 40 * verticalViewAngleSlider.value / 100.0;
-    var horizontalViewAngleSlider = document.getElementById("horizontalViewAngleSlider");
-    horizontal_view_angle = 2 * Math.PI * horizontalViewAngleSlider.value / 100.0;
-    
-    var camera = new Camera(new P(10 * Math.cos(horizontal_view_angle), 10 * Math.sin(horizontal_view_angle), vertical_view_angle),
-                              new P(0, 0, 1), new P(0, 0, 1), 1300, new P(0,0));
+    horizontal_view_angle = Math.PI;
+    var camera = new Camera(new P(10 * Math.cos(horizontal_view_angle), 10 * Math.sin(horizontal_view_angle),
+                                  vertical_view_angle), new P(0, 0, 1), new P(0, 0, 1), 1300, new P(0,0));
 
     verticalViewAngleSlider.oninput = function() {
         vertical_view_angle = 20 - 40 * verticalViewAngleSlider.value / 100.0;
@@ -135,16 +285,21 @@ function init() {
         draw();
     }
 
+    // TODO: rename slider
+    x_offset = -8 * Math.PI * (horizontalViewAngleSlider.value / 100.0 - 0.5);
     horizontalViewAngleSlider.oninput = function() {
-        horizontal_view_angle = 2 * Math.PI * horizontalViewAngleSlider.value / 100.0;
-        camera.p.x = 10 * Math.cos(horizontal_view_angle);
-        camera.p.y = 10 * Math.sin(horizontal_view_angle);
+        //horizontal_view_angle = 2 * Math.PI * horizontalViewAngleSlider.value / 100.0;
+        x_offset = -8 * Math.PI * (horizontalViewAngleSlider.value / 100.0 - 0.5);
+        //camera.p.x = 10 * Math.cos(horizontal_view_angle);
+        //camera.p.y = 10 * Math.sin(horizontal_view_angle);
         draw();
     }
 
-    random_colors = [ "rgb(28,63,163)", "rgb(47,151,5)", "rgb(35,135,196)", "rgb(13,178,159)", "rgb(88,21,47)", "rgb(98,11,77)", "rgb(159,160,25)", "rgb(98,103,144)", "rgb(157,38,199)", "rgb(171,37,199)" ]; // (guaranteed to be random)
+    random_colors = [ "rgb(28,63,163)", "rgb(47,151,5)", "rgb(35,135,196)", "rgb(13,178,159)",
+                      "rgb(88,21,47)",  "rgb(98,11,77)", "rgb(159,160,25)", "rgb(98,103,144)",
+                      "rgb(157,38,199)", "rgb(171,37,199)" ]; // (guaranteed to be random)
 
-    var range = new Rect( new P(-30, 0), new P(60, 40));
+    var initial_range = new Rect( new P(-30, 0), new P(60, 40));
 
     x_step = Math.PI / 6;
     y_step = 0.5;
@@ -165,11 +320,8 @@ function init() {
     var margin = 40;
     var size = Math.min(canvas.height-margin*2, (canvas.width-margin*(n_graphs+1)) / n_graphs);
     var rects = [0,1,2,3].map(i => new Rect( new P(margin+(margin+size)*i,50), new P(size,size)));
-    graphs = [];
-    addUpperHalfPlaneGraph(rects[0]);
-    addPoincareGraph(rects[1], range);
-    addPseudosphereGraph(rects[2], camera);
-    addKleinGraph(rects[3], range);
+    graphs = [new UpperHalfPlaneGraph(rects[0]), new PoincareGraph(rects[1], initial_range),
+        new PseudosphereGraph(rects[2], camera), new KleinGraph(rects[3], initial_range)];
 
     // construct geodesics by defining start and end points
     const pts = [[new P(-6, 1), new P(4, 1)],
@@ -198,127 +350,6 @@ function init() {
     canvas.addEventListener( 'mouseup',   onMouseUp,   false );
 }
 
-function addUpperHalfPlaneGraph(rect) {
-    const range_to_show = new Rect( new P(-7.5, 0), new P(15, 15));
-    var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range_to_show.ymin), new P(x * Math.PI, range_to_show.ymax), 2));
-    const flipY = p => new P(p.x, range_to_show.ymax - p.y + range_to_show.ymin); // flip the range in-place
-    const flipYTransform = new Transform(flipY, flipY);
-    const upperHalfPlaneAxesTransform = new ComposedTransform(flipYTransform, new LinearTransform2D(range_to_show, rect));
-    const drawing = () => {
-        // draw the minor axes
-        for(var y = range_to_show.ymin; y<=range_to_show.ymax; y+= y_step) {
-            drawLine(getLinePoints(new P(range_to_show.xmin, y), new P(range_to_show.xmax, y), 2).map(upperHalfPlaneAxesTransform.forwards), minor_axis_color);
-        }
-        for(var x = 0; x<=range_to_show.xmax; x+= x_step) {
-            drawLine(getLinePoints(new P(x, range_to_show.ymin), new P(x, range_to_show.ymax), 2).map(upperHalfPlaneAxesTransform.forwards), minor_axis_color);
-        }
-        for(var x = -x_step; x>=range_to_show.xmin; x-= x_step) {
-            drawLine(getLinePoints(new P(x, range_to_show.ymin), new P(x, range_to_show.ymax), 2).map(upperHalfPlaneAxesTransform.forwards), minor_axis_color);
-        }
-        // draw the x-axis
-        const x_axis = getLinePoints(new P(range_to_show.xmin, 0), new P(range_to_show.xmax, 0), 2);
-        drawLine(x_axis.map(upperHalfPlaneAxesTransform.forwards), major_axis_color);
-        // draw the unit line
-        drawLine(getLinePoints(new P(range_to_show.xmin, 1), new P(range_to_show.xmax, 1), 2).map(upperHalfPlaneAxesTransform.forwards), unit_line_color);
-        // draw the seams where the pseudosphere wraps around itself
-        seams.forEach(seam => drawLine(seam.map(upperHalfPlaneAxesTransform.forwards), seam_color));
-        // draw the geodesics
-        drawGeodesics(upperHalfPlaneAxesTransform.forwards, 500);
-    };
-    const upperHalfPlaneAxes = new Graph(rect, upperHalfPlaneAxesTransform, "Upper half-plane", "", "", drawing);
-    graphs.push(upperHalfPlaneAxes);
-}
-
-function addPoincareGraph(rect, range) {
-    var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range.ymin), new P(x * Math.PI, range.ymax), 700));
-    const circle_of_interest = new Circle(new P(0, -0.5), 0.52);
-    const circle_of_interest_to_rect = new LinearTransform2D(circle_of_interest.getRect(), rect);
-    const PoincareAxesTransform = new ComposedTransform(inversionTransform, circle_of_interest_to_rect);
-    const drawing = () => {
-        // draw the minor axes
-        for(var y = range.ymin; y<=range.ymax; y+= y_step) {
-            drawLine(getLinePoints(new P(range.xmin, y), new P(range.xmax, y), 500).map(PoincareAxesTransform.forwards), minor_axis_color);
-        }
-        for(var x = 0; x<=range.xmax; x+= x_step) {
-            drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 200).map(PoincareAxesTransform.forwards), minor_axis_color);
-        }
-        for(var x = -x_step; x>=range.xmin; x-= x_step) {
-            drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 200).map(PoincareAxesTransform.forwards), minor_axis_color);
-        }
-        // draw the unit circle ( = x-axis)
-        const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(circle_of_interest_to_rect.forwards);
-        drawLine(circle_pts, major_axis_color);
-        // draw the unit line
-        drawLine(getLinePoints(new P(range.xmin, 1), new P(range.xmax, 1), 500).map(PoincareAxesTransform.forwards), unit_line_color);
-        // draw the seams where the pseudosphere wraps around itself
-        seams.forEach(seam => drawLine(seam.map(PoincareAxesTransform.forwards), seam_color));
-        // draw the geodesics
-        drawGeodesics(PoincareAxesTransform.forwards, 500);
-    };
-    const PoincareAxes = new Graph(rect, PoincareAxesTransform, "Poincaré disk model", "", "", drawing);
-    graphs.push(PoincareAxes);
-}
-
-function addPseudosphereGraph(rect, camera) {
-    const range_to_show = new Rect( new P(-Math.PI, 1), new P(2 * Math.PI, 60));
-    var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range_to_show.ymin), new P(x * Math.PI, range_to_show.ymax), 700));
-    const pseudosphereTransform = new Transform(pseudosphere, identityTransform); // TODO: would need camera ray intersection for the reverse
-    camera.pp = rect.center;
-    const cameraTransform = new Transform(p => camera.project(p), identityTransform);
-    const pseudosphereAxesTransform = new ComposedTransform(invertXTransform, pseudosphereTransform, cameraTransform);
-    const drawing = () => {
-        // draw the minor axes
-        for(var y = range_to_show.ymin; y<=range_to_show.ymax; y+= y_step) {
-            drawLine(getLinePoints(new P(range_to_show.xmin, y), new P(range_to_show.xmax, y), 500).map(pseudosphereAxesTransform.forwards), minor_axis_color);
-        }
-        for(var x = 0; x<=range_to_show.xmax; x+= x_step) {
-            drawLine(getLinePoints(new P(x, range_to_show.ymin), new P(x, range_to_show.ymax), 500).map(pseudosphereAxesTransform.forwards), minor_axis_color);
-        }
-        for(var x = -x_step; x>=range_to_show.xmin; x-= x_step) {
-            drawLine(getLinePoints(new P(x, range_to_show.ymin), new P(x, range_to_show.ymax), 500).map(pseudosphereAxesTransform.forwards), minor_axis_color);
-        }
-        // draw the unit line
-        drawLine(getLinePoints(new P(range_to_show.xmin, 1), new P(range_to_show.xmax, 1), 500).map(pseudosphereAxesTransform.forwards), unit_line_color);
-        // draw the seams where the pseudosphere wraps around itself (just one here, else the line looks too heavy)
-        drawLine(seams[0].map(pseudosphereAxesTransform.forwards), seam_color);
-        // draw the geodesics
-        drawGeodesics(pseudosphereAxesTransform.forwards, 5000); // need more points here because there can be a lot of stretching
-    };
-    const pseudosphereAxes = new Graph(rect, pseudosphereAxesTransform, "Pseudosphere", "", "", drawing);
-    graphs.push(pseudosphereAxes);
-}
-
-function addKleinGraph(rect, range) {
-    var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, range.ymin), new P(x * Math.PI, range.ymax), 2));
-    const circle_of_interest = new Circle(new P(0, -0.5), 0.72);
-    const circle_of_interest_to_rect = new LinearTransform2D(circle_of_interest.getRect(), rect);
-    const PoincareToKleinTransform = new Transform(p => unit_circle.poincareToKlein(p), p => unit_circle.kleinToPoincare(p));
-    KleinAxesTransform = new ComposedTransform(inversionTransform, PoincareToKleinTransform, circle_of_interest_to_rect);
-    const drawing = () => {
-        // draw the minor axes
-        for(var y = range.ymin; y<=range.ymax; y+= y_step) {
-            drawLine(getLinePoints(new P(range.xmin, y), new P(range.xmax, y), 500).map(KleinAxesTransform.forwards), minor_axis_color);
-        }
-        for(var x = 0; x<=range.xmax; x+= x_step) {
-            drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 2).map(KleinAxesTransform.forwards), minor_axis_color);
-        }
-        for(var x = -x_step; x>=range.xmin; x-= x_step) {
-            drawLine(getLinePoints(new P(x, range.ymin), new P(x, range.ymax), 2).map(KleinAxesTransform.forwards), minor_axis_color);
-        }
-        // draw the unit circle ( = x-axis)
-        const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(circle_of_interest_to_rect.forwards);
-        drawLine(circle_pts, major_axis_color);
-        // draw the unit line
-        drawLine(getLinePoints(new P(range.xmin, 1), new P(range.xmax, 1), 500).map(KleinAxesTransform.forwards), unit_line_color);
-        // draw the seams where the pseudosphere wraps around itself
-        seams.forEach(seam => drawLine(seam.map(KleinAxesTransform.forwards), seam_color));
-        // draw the geodesics
-        drawGeodesics(KleinAxesTransform.forwards, 2); // all the geodesics are straight lines here, so 2 points is enough!
-    };
-    const KleinAxes = new Graph(rect, KleinAxesTransform, "Klein disk model", "", "", drawing);
-    graphs.push(KleinAxes);
-}
-
 function drawGeodesics(transform, n_pts) {
     ctx.lineWidth = '1.1';
     geodesics.forEach(geodesic => {
@@ -339,6 +370,10 @@ function random_color() {
 }
 
 function draw() {
+    graphs.forEach(graph => {
+        graph.update_transforms();
+    });
+
     // fill canvas with light gray
     ctx.fillStyle = 'rgb(240,240,240)';
     ctx.beginPath();
@@ -357,7 +392,7 @@ function draw() {
         ctx.clip(); // clip to this rect until restored
 
         // draw things that are particular to this graph
-        graph.drawing();
+        graph.draw();
 
         // draw the test geodesic, if chosen
         if(typeof test_geodesic != 'undefined') {
