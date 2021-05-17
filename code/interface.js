@@ -79,7 +79,17 @@ class UpperHalfPlaneGraph extends Graph {
         var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, this.range_to_show.ymin), new P(x * Math.PI, this.range_to_show.ymax), 2));
         seams.forEach(seam => drawLine(seam.map(this.transform.forwards), seam_color));
         // draw the geodesics
-        drawGeodesics(this.transform.forwards, 500);
+        ctx.lineWidth = '1.1';
+        geodesics.forEach(geodesic => {
+            var circle = findUpperHalfPlaneCircle(geodesic.ends[0], geodesic.ends[1]);
+            var c = this.transform.forwards(circle.p);
+            var r = dist(c, this.transform.forwards(geodesic.ends[0]));
+            ctx.strokeStyle = geodesic.color;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, r, 0, 2 * Math.PI);
+            ctx.stroke();
+        });
+        drawGeodesicsEndPoints(this.transform.forwards);
     }
 }
 
@@ -100,7 +110,7 @@ class PoincareGraph extends Graph {
     }
     draw() {
         // draw the minor axes
-        for(var y = this.range.ymin; y<=this.range.ymax; y+= y_step) {
+        /*for(var y = this.range.ymin; y<=this.range.ymax; y+= y_step) {
             drawLine(getLinePoints(new P(this.range.xmin, y), new P(this.range.xmax, y), 500).map(this.transform.forwards), minor_axis_color);
         }
         for(var x = 0; x<=this.range.xmax; x+= x_step) {
@@ -118,7 +128,10 @@ class PoincareGraph extends Graph {
         var seams = [-9,-7,-5,-3,-1,1,3,5,7,9].map(x => getLinePoints(new P(x * Math.PI, this.range.ymin), new P(x * Math.PI, this.range.ymax), 700));
         seams.forEach(seam => drawLine(seam.map(this.transform.forwards), seam_color));
         // draw the geodesics
-        drawGeodesics(this.transform.forwards, 500);
+        ctx.lineWidth = '1.1';
+        // TODO
+        */
+        drawGeodesicsEndPoints(this.transform.forwards);
     }
 }
 
@@ -141,7 +154,7 @@ class PseudosphereGraph extends Graph {
     }
     draw() {
         // draw the minor axes
-        for(var y = this.range_to_show.ymin; y<=this.range_to_show.ymax; y+= y_step) {
+        /*for(var y = this.range_to_show.ymin; y<=this.range_to_show.ymax; y+= y_step) {
             drawLine(getLinePoints(new P(this.range_to_show.xmin, y), new P(this.range_to_show.xmax, y), 500).map(this.transform.forwards), minor_axis_color);
         }
         for(var x = 0; x<=this.range_to_show.xmax; x+= x_step) {
@@ -156,7 +169,10 @@ class PseudosphereGraph extends Graph {
         var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, this.range_to_show.ymin), new P(x * Math.PI, this.range_to_show.ymax), 700));
         drawLine(seams[0].map(this.transform.forwards), seam_color);
         // draw the geodesics
-        drawGeodesics(this.transform.forwards, 5000); // need more points here because there can be a lot of stretching
+        ctx.lineWidth = '1.1';
+        // TODO
+        */
+        drawGeodesicsEndPoints(this.transform.forwards);
     }
 }
 
@@ -179,9 +195,9 @@ class KleinGraph extends Graph {
     }
     draw() {
         // draw the minor axes
-        for(var y = this.range.ymin; y<=this.range.ymax; y+= y_step) {
+        /*for(var y = this.range.ymin; y<=this.range.ymax; y+= y_step) {
             drawLine(getLinePoints(new P(this.range.xmin, y), new P(this.range.xmax, y), 500).map(KleinAxesTransform.forwards), minor_axis_color);
-        }
+        }*/
         for(var x = 0; x<=this.range.xmax; x+= x_step) {
             drawLine(getLinePoints(new P(x, this.range.ymin), new P(x, this.range.ymax), 2).map(KleinAxesTransform.forwards), minor_axis_color);
         }
@@ -189,7 +205,7 @@ class KleinGraph extends Graph {
             drawLine(getLinePoints(new P(x, this.range.ymin), new P(x, this.range.ymax), 2).map(KleinAxesTransform.forwards), minor_axis_color);
         }
         // draw the unit circle ( = x-axis)
-        const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(this.circle_of_interest_to_rect.forwards);
+        /*const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(this.circle_of_interest_to_rect.forwards);
         drawLine(circle_pts, major_axis_color);
         // draw the unit line
         drawLine(getLinePoints(new P(this.range.xmin, 1), new P(this.range.xmax, 1), 500).map(KleinAxesTransform.forwards), unit_line_color);
@@ -197,10 +213,12 @@ class KleinGraph extends Graph {
         var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, this.range.ymin), new P(x * Math.PI, this.range.ymax), 2));
         seams.forEach(seam => drawLine(seam.map(KleinAxesTransform.forwards), seam_color));
         // draw the geodesics
-        drawGeodesics(KleinAxesTransform.forwards, 2); // all the geodesics are straight lines here, so 2 points is enough!
+        ctx.lineWidth = '1.1';
+        //TODO
+        */
+        drawGeodesicsEndPoints(KleinAxesTransform.forwards);
     }
 }
-
 
 function resetMarkers() {
     geodesics.forEach( geodesic => {
@@ -350,15 +368,8 @@ function init() {
     canvas.addEventListener( 'mouseup',   onMouseUp,   false );
 }
 
-function drawGeodesics(transform, n_pts) {
-    ctx.lineWidth = '1.1';
+function drawGeodesicsEndPoints(transform) {
     geodesics.forEach(geodesic => {
-        // This is magical. All geodesics are straight lines in the Klein model, so we jump into Klein space,
-        // interpolate between the start and end points to make a list of points, then jump back into our xy
-        // coordinates (on the upper half-plane model). Then to draw we can jump into the space of this graph.
-        const klein_pts = geodesic.ends.map(KleinAxesTransform.forwards);
-        const line = getLinePoints(klein_pts[0], klein_pts[1], n_pts).map(KleinAxesTransform.backwards);
-        drawLine(line.map(transform), geodesic.color)
         for(var iEnd = 0; iEnd < 2; iEnd++) {
             fillCircle(transform(geodesic.ends[iEnd]), geodesic.end_sizes[iEnd], geodesic.end_colors[iEnd]);
         }

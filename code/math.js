@@ -294,3 +294,13 @@ function divideNicely(x, n_divisions) {
     else if( value2_closeness < value5_closeness ) { return value2; }
     else { return value5; }
 }
+
+function findUpperHalfPlaneCircle(a,b) {
+    // return the circle that joins the two points a and b with a geodesic
+    var p = lerp(a, b, 0.5);
+    var n = normalize(new P(a.y - b.y, b.x - a.x));
+    var t = - p.y / n.y;
+    var c = add(p, scalar_mul(n, t));
+    var r = dist(c, a);
+    return new Circle(c, r);
+}
