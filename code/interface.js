@@ -90,8 +90,7 @@ class UpperHalfPlaneGraph extends Graph {
             ctx.beginPath();
             var angle_a = Math.atan2(a.y - c.y, a.x - c.x);
             var angle_b = Math.atan2(b.y - c.y, b.x - c.x);
-            if(angle_b < angle_a) { [angle_a, angle_b] = [angle_b, angle_a]; }
-            ctx.arc(c.x, c.y, r, angle_a, angle_b );
+            ctx.arc(c.x, c.y, r, Math.min(angle_a, angle_b), Math.max(angle_a, angle_b) );
             ctx.stroke();
         });
         drawGeodesicsEndPoints(this.transform.forwards);
@@ -123,10 +122,15 @@ class PoincareGraph extends Graph {
         }
         for(var x = -x_step; x>=this.range.xmin; x-= x_step) {
             drawLine(getLinePoints(new P(x, this.range.ymin), new P(x, this.range.ymax), 200).map(this.transform.forwards), minor_axis_color);
-        }
+        }*/
         // draw the unit circle ( = x-axis)
-        const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(this.circle_of_interest_to_rect.forwards);
-        drawLine(circle_pts, major_axis_color);
+        var c = this.circle_of_interest_to_rect.forwards(unit_circle.p);
+        var r = dist(c, this.circle_of_interest_to_rect.forwards(add(unit_circle.p, new P(1,0))));
+        ctx.strokeStyle = major_axis_color;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, r, 0, 2*Math.PI);
+        ctx.stroke();
+        /*
         // draw the unit line
         drawLine(getLinePoints(new P(this.range.xmin, 1), new P(this.range.xmax, 1), 500).map(this.transform.forwards), unit_line_color);
         // draw the seams where the pseudosphere wraps around itself
