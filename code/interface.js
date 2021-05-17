@@ -214,6 +214,12 @@ class KleinGraph extends Graph {
             drawLine(getLinePoints(new P(x, this.range.ymin), new P(x, this.range.ymax), 2).map(KleinAxesTransform.forwards), minor_axis_color);
         }
         // draw the unit circle ( = x-axis)
+        var c = this.circle_of_interest_to_rect.forwards(unit_circle.p);
+        var r = dist(c, this.circle_of_interest_to_rect.forwards(add(unit_circle.p, new P(1,0))));
+        ctx.strokeStyle = major_axis_color;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, r, 0, 2*Math.PI);
+        ctx.stroke();
         /*const circle_pts = getEllipsePoints(unit_circle.p, new P(unit_circle.r, 0), new P(0, unit_circle.r)).map(this.circle_of_interest_to_rect.forwards);
         drawLine(circle_pts, major_axis_color);
         // draw the unit line
