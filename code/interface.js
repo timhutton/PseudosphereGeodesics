@@ -83,10 +83,15 @@ class UpperHalfPlaneGraph extends Graph {
         geodesics.forEach(geodesic => {
             var circle = findUpperHalfPlaneCircle(geodesic.ends[0], geodesic.ends[1]);
             var c = this.transform.forwards(circle.p);
-            var r = dist(c, this.transform.forwards(geodesic.ends[0]));
+            var a = this.transform.forwards(geodesic.ends[0]);
+            var b = this.transform.forwards(geodesic.ends[1]);
+            var r = dist(c, a);
             ctx.strokeStyle = geodesic.color;
             ctx.beginPath();
-            ctx.arc(c.x, c.y, r, 0, 2 * Math.PI);
+            var angle_a = Math.atan2(a.y - c.y, a.x - c.x);
+            var angle_b = Math.atan2(b.y - c.y, b.x - c.x);
+            if(angle_b < angle_a) { [angle_a, angle_b] = [angle_b, angle_a]; }
+            ctx.arc(c.x, c.y, r, angle_a, angle_b );
             ctx.stroke();
         });
         drawGeodesicsEndPoints(this.transform.forwards);
