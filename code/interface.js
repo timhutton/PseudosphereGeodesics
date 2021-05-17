@@ -221,10 +221,18 @@ class KleinGraph extends Graph {
         // draw the seams where the pseudosphere wraps around itself
         var seams = [-5,-3,-1,1,3,5].map(x => getLinePoints(new P(x * Math.PI, this.range.ymin), new P(x * Math.PI, this.range.ymax), 2));
         seams.forEach(seam => drawLine(seam.map(KleinAxesTransform.forwards), seam_color));
-        // draw the geodesics
-        ctx.lineWidth = '1.1';
-        //TODO
         */
+        // draw the geodesics
+        geodesics.forEach(geodesic => {
+            var a = this.transform.forwards(geodesic.ends[0]);
+            var b = this.transform.forwards(geodesic.ends[1]);
+            ctx.lineWidth = '1.1';
+            ctx.strokeStyle = geodesic.color;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+        });
         drawGeodesicsEndPoints(KleinAxesTransform.forwards);
     }
 }
