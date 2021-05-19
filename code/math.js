@@ -222,6 +222,23 @@ function getLinePoints(a, b, n_pts=100) {
     return pts;
 }
 
+function getArcPoints(c, a, b, n_pts=100) {
+    // Return a list of points spaced equally around a circular arc with center c and end points a and b.
+    var pts = [];
+    var r = dist(a, c);
+    var angle_a = Math.atan2(a.y - c.y, a.x - c.x);
+    var angle_b = Math.atan2(b.y - c.y, b.x - c.x);
+    var min_angle = Math.min(angle_a, angle_b);
+    var max_angle = Math.max(angle_a, angle_b);
+    var step = (max_angle - min_angle) / (n_pts - 1)
+    for(var i=0;i<n_pts;i++) {
+        var angle = min_angle + i * step;
+        var p = new P(c.x + Math.cos(angle) * r, c.y + Math.sin(angle) * r);
+        pts.push(p);
+    }
+    return pts;
+}
+
 function getEllipsePoints(c, a, b, n_pts=100, repeat_first_point=true) {
     // Return a list of points spaced around an ellipse with center c and radii vectors a and b.
     var pts = [];
@@ -299,7 +316,8 @@ function findUpperHalfPlaneCircle(a,b) {
     // return the circle that joins the two points a and b with a geodesic
     var p = lerp(a, b, 0.5);
     var n = normalize(new P(a.y - b.y, b.x - a.x));
-    var t = - p.y / n.y;
+    var center_y = 0; // we know that the center of the circle is at y=0
+    var t = (center_y - p.y) / n.y;
     var c = add(p, scalar_mul(n, t));
     var r = dist(c, a);
     return new Circle(c, r);

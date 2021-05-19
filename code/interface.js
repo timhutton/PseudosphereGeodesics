@@ -163,7 +163,7 @@ class PseudosphereGraph extends Graph {
     }
     draw() {
         // draw the minor axes
-        /*for(var y = this.range_to_show.ymin; y<=this.range_to_show.ymax; y+= y_step) {
+        for(var y = this.range_to_show.ymin; y<=this.range_to_show.ymax; y+= y_step) {
             drawLine(getLinePoints(new P(this.range_to_show.xmin, y), new P(this.range_to_show.xmax, y), 500).map(this.transform.forwards), minor_axis_color);
         }
         for(var x = 0; x<=this.range_to_show.xmax; x+= x_step) {
@@ -179,8 +179,11 @@ class PseudosphereGraph extends Graph {
         drawLine(seams[0].map(this.transform.forwards), seam_color);
         // draw the geodesics
         ctx.lineWidth = '1.1';
-        // TODO
-        */
+        geodesics.forEach(geodesic => {
+            const circle = findUpperHalfPlaneCircle(geodesic.ends[0], geodesic.ends[1]);
+            const arc_pts = getArcPoints(circle.p, geodesic.ends[0], geodesic.ends[1], 400);
+            drawLine(arc_pts.map(this.transform.forwards), geodesic.color)
+        });
         drawGeodesicsEndPoints(this.transform.forwards);
     }
 }
