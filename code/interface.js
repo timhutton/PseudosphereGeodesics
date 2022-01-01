@@ -163,6 +163,8 @@ class PseudosphereGraph extends Graph {
     }
     draw() {
         // draw the minor axes
+        // TODO: transform all lines onto pseudosphere then reinterpolate down to fewer points based on curvature, store in class to avoid recomputing every time
+        // may need different update functions: range changed, geodesic endpoint changed, vertical view angle changed
         for(var y = this.range_to_show.ymin; y<=this.range_to_show.ymax; y+= y_step) {
             drawLine(getLinePoints(new P(this.range_to_show.xmin, y), new P(this.range_to_show.xmax, y), 500).map(this.transform.forwards), minor_axis_color);
         }
